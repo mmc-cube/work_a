@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MQTT Web Demo (test.mosquitto.org)</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 16px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    input, textarea, button { font-size: 14px; padding: 8px; }
+    input, textarea { width: min(560px, 100%); }
+    textarea { height: 90px; }
+    #log { white-space: pre-wrap; background: #111; color: #ddd; padding: 12px; border-radius: 8px; height: 260px; overflow: auto; }
+    .badge { padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+    .ok { background: #e7f7ea; color: #146c2e; }
+    .bad { background: #fde8e8; color: #9b1c1c; }
+    .muted { color: #666; font-size: 12px; }
+  </style>
+  <!-- MQTT.js CDN -->
+  <script src="./mqtt.min.js"></script>
+</head>
+<body>
+  <h2>MQTT (WebSocket) Demo</h2>
+  <div class="muted">
+    公共测试 Broker：test.mosquitto.org（无鉴权，Topic 可能被他人订阅/发布；建议用自己的随机前缀）
+  </div>
+
+  <div class="row">
+    <label>Broker URL：</label>
+    <input id="broker" value="wss://test.mosquitto.org:8081" />
+  </div>
+
+  <div class="row">
+    <label>Client ID：</label>
+    <input id="clientId" />
+    <span id="status" class="badge bad">未连接</span>
+    <button id="btnConnect">连接</button>
+    <button id="btnDisconnect" disabled>断开</button>
+  </div>
+
+  <hr />
+
+  <div class="row">
+    <label>订阅 Topic：</label>
+    <input id="subTopic" value="parl_demo_001/telemetry" />
+    <button id="btnSub" disabled>订阅</button>
+    <button id="btnUnsub" disabled>取消订阅</button>
+  </div>
+
+  <div class="row">
+    <label>发布 Topic：</label>
+    <input id="pubTopic" value="parl_demo_001/cmd" />
+  </div>
+
+  <div class="row" style="align-items:flex-start;">
+    <label>Payload：</label>
+    <textarea id="payload">{ "cmd": "ping", "ts": 0 }</textarea>
+  </div>
+
+  <div class="row">
+    <label>QoS：</label>
+    <input id="qos" type="number" min="0" max="2" value="0" style="width:80px;" />
+    <label>Retain：</label>
+    <input id="retain" type="checkbox" />
+    <button id="btnPub" disabled>发布</button>
+    <button id="btnClear">清空日志</button>
+  </div>
+
+  <h3>日志</h3>
+  <div id="log"></div>
+
+<script>
+  let client = null;
+
+  const el = (id) => document.getElementById(id);
+  const logBox = el("log");
+  const status = el("status");
+
+  function log(...args) {
+    const line = `[${new Date().toLocaleTimeString()}] ${args.join(" ")}`;
+    logBox.textContent += line + "\n";
+    logBox.scrollTop = logBox.scrollHeight;
+    console.log(...args);
+  }
+
+  function setConnectedUI(connected) {
+    status.textContent = connected ? "已连接" : "未连接";
+    status.className = "badge " + (connected ? "ok" : "bad");
+
+    el("btnConnect").disabled = connected;
+    el("btnDisconnect").disabled = !connected;
+    el("btnSub").disabled = !connected;
+    el("btnUnsub").disabled = !connected;
+    el("btnPub").disabled = !connected;
+  }
+
+  function randomId() {
+    // 让 clientId 更随机，避免公共 broker 上冲突
+    return "web_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+  }
+
+  // 初始化 clientId
+  el("clientId").value = randomId();
+
+  el("btnConnect").onclick = () => {
+    const url = el("broker").value.trim();
+    const clientId = el("clientId").value.trim() || randomId();
+    el("clientId").value = clientId;
+
+    log("Connecting to", url, "clientId=", clientId);
+
+    client = mqtt.connect(url, {
+      clientId,
+      clean: true,
+      keepalive: 30,
+      connectTimeout: 10 * 1000,
+      reconnectPeriod: 2000, // 自动重连
+    });
+
+    client.on("connect", () => {
+      log("✅ Connected");
+      setConnectedUI(true);
+    });
+
+    client.on("reconnect", () => log("… Reconnecting"));
+    client.on("close", () => { log("⚠️ Closed"); setConnectedUI(false); });
+    client.on("offline", () => log("⚠️ Offline"));
+    client.on("error", (err) => log("❌ Error:", err?.message || err));
+
+    client.on("message", (topic, message, packet) => {
+      const text = message?.toString?.() ?? String(message);
+      log("📩", topic, "qos=" + packet.qos, "retain=" + packet.retain, "payload=", text);
+    });
+  };
+
+  el("btnDisconnect").onclick = () => {
+    if (!client) return;
+    log("Disconnecting...");
+    client.end(true);
+    client = null;
+    setConnectedUI(false);
+  };
+
+  el("btnSub").onclick = () => {
+    const topic = el("subTopic").value.trim();
+    if (!client || !topic) return;
+    client.subscribe(topic, { qos: 0 }, (err, granted) => {
+      if (err) log("❌ Subscribe error:", err.message || err);
+      else log("✅ Subscribed:", JSON.stringify(granted));
+    });
+  };
+
+  el("btnUnsub").onclick = () => {
+    const topic = el("subTopic").value.trim();
+    if (!client || !topic) return;
+    client.unsubscribe(topic, (err) => {
+      if (err) log("❌ Unsubscribe error:", err.message || err);
+      else log("✅ Unsubscribed:", topic);
+    });
+  };
+
+  el("btnPub").onclick = () => {
+    const topic = el("pubTopic").value.trim();
+    if (!client || !topic) return;
+
+    let payload = el("payload").value;
+    // 小方便：如果是 JSON，自动补 ts
+    try {
+      const obj = JSON.parse(payload);
+      obj.ts = Date.now();
+      payload = JSON.stringify(obj);
+      el("payload").value = payload;
+    } catch (_) {}
+
+    const qos = Math.max(0, Math.min(2, parseInt(el("qos").value || "0", 10)));
+    const retain = el("retain").checked;
+
+    client.publish(topic, payload, { qos, retain }, (err) => {
+      if (err) log("❌ Publish error:", err.message || err);
+      else log("📤 Published:", topic, "qos=" + qos, "retain=" + retain, "payload=", payload);
+    });
+  };
+
+  el("btnClear").onclick = () => logBox.textContent = "";
+
+  setConnectedUI(false);
+</script>
+</body>
+</html>
