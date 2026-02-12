@@ -6,51 +6,56 @@
   <title>ESP32S3 控制面板</title>
   <style>
     :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --line:#e5e7eb;
-      --pri:#2563eb;
-      --pri2:#1d4ed8;
-      --ok:#16a34a;
-      --bad:#e11d48;
-      --warn:#f59e0b;
-      --shadow:0 8px 22px rgba(15, 23, 42, .06);
+      --bg:#f6f7fb; --card:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+      --pri:#2563eb; --pri2:#1d4ed8; --ok:#16a34a; --bad:#e11d48; --warn:#f59e0b;
+      --shadow:0 6px 18px rgba(15, 23, 42, .06);
+      --appTop: 74px; /* ⭐ 顶部留白：被你App上方框遮挡的话，把这里调大/调小 */
     }
     *{ box-sizing:border-box; }
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text); }
-    .wrap{ padding:14px; max-width:520px; margin:0 auto; }
-    .top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
-    .title{ font-size:18px; font-weight:800; letter-spacing:.2px; }
-    .badge{ font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#fff; }
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg); color:var(--text);
+    }
+    .wrap{
+      padding:12px;
+      padding-top: calc(12px + var(--appTop) + env(safe-area-inset-top));
+      max-width:520px; margin:0 auto;
+    }
+    .top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .title{ font-size:16px; font-weight:900; letter-spacing:.2px; }
+    .badge{
+      font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--line);
+      background:#fff; white-space:nowrap;
+    }
     .badge.ok{ color:var(--ok); border-color:rgba(22,163,74,.25); background:rgba(22,163,74,.07); }
     .badge.bad{ color:var(--bad); border-color:rgba(225,29,72,.25); background:rgba(225,29,72,.06); }
 
-    .grid{ display:grid; grid-template-columns:1fr; gap:12px; }
-    .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; box-shadow:var(--shadow); }
-    .cardHead{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
-    .name{ font-weight:800; }
+    .grid{ display:grid; grid-template-columns:1fr; gap:10px; }
+    .card{
+      background:var(--card); border:1px solid var(--line); border-radius:16px;
+      padding:12px; box-shadow:var(--shadow);
+    }
+    .cardHead{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+    .name{ font-weight:900; }
     .sub{ color:var(--muted); font-size:12px; }
-    .big{ font-size:38px; font-weight:900; line-height:1.05; margin:4px 0 2px; letter-spacing:.2px; }
+    .big{ font-size:34px; font-weight:950; line-height:1.05; margin:2px 0 0; letter-spacing:.2px; }
     .alarm{ border-color:rgba(225,29,72,.35); background:rgba(225,29,72,.04); }
     .alarmTag{
-      font-size:12px; padding:5px 10px; border-radius:999px;
-      color:#fff; background:var(--bad);
+      font-size:12px; padding:5px 10px; border-radius:999px; color:#fff; background:var(--bad);
+      white-space:nowrap;
     }
 
     .row{ display:flex; gap:10px; }
     .row > *{ flex:1; }
     input{
-      width:100%; padding:12px 12px; border-radius:12px; border:1px solid var(--line);
+      width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--line);
       background:#fff; color:var(--text); outline:none; font-size:14px;
     }
     input::placeholder{ color:#94a3b8; }
-
-    .btns{ display:flex; gap:10px; margin-top:10px; }
+    .btns{ display:flex; gap:10px; margin-top:8px; }
     button{
-      flex:1; padding:12px 10px; border-radius:14px; border:1px solid var(--line);
-      background:#fff; color:var(--text); font-weight:800; font-size:14px;
+      flex:1; padding:11px 10px; border-radius:14px; border:1px solid var(--line);
+      background:#fff; color:var(--text); font-weight:900; font-size:14px;
       box-shadow:0 6px 16px rgba(15, 23, 42, .05);
       -webkit-tap-highlight-color: transparent;
     }
@@ -58,8 +63,12 @@
     button.primary:active{ background:var(--pri2); }
     button.warn{ background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.35); color:#92400e; }
     button:active{ transform:scale(.99); }
+    button:disabled{ opacity:.45; box-shadow:none; }
 
-    .footer{ margin-top:10px; color:var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:10px; }
+    .footer{
+      margin-top:8px; color:var(--muted); font-size:12px;
+      display:flex; justify-content:space-between; gap:10px;
+    }
     .hint{ color:var(--muted); }
   </style>
   <script src="./mqtt.min.js"></script>
@@ -129,26 +138,61 @@
   </div>
 
 <script>
-  // ====== 你按需改这里 ======
+  // ========= 固定协议（你需要的话可以只改 Broker）=========
   const BROKER_URL = "wss://test.mosquitto.org:8081";
-  const MQTT_SUB_TOPIC = "fangmu/dev/esp32s3_001/up";
-  const MQTT_PUB_TOPIC = "fangmu/dev/esp32s3_001/down";
-  // ===========================
+  const MQTT_SUB_TOPIC = "fangmu/dev/esp32s3_001/up";    // 设备->上位机（订阅）
+  const MQTT_PUB_TOPIC = "fangmu/dev/esp32s3_001/down";  // 上位机->设备（发布）
+  // ==========================================================
+
+  // 顶部留白可在这里改（也可只改 CSS 里的 --appTop）
+  const APP_TOP_PX = 74;
+  document.documentElement.style.setProperty("--appTop", APP_TOP_PX + "px");
+
+  const MAX_V = 3.30;
+  const STORAGE_KEY = "esp32s3_panel_v1";
 
   let client = null;
   let latest = { mq7_v:null, flame_v:null, mq7_th:null, flame_th:null };
+  let connected = false;
 
   const $ = (id) => document.getElementById(id);
   const connBadge = $("connBadge");
   const hint = $("hint");
   const lastTs = $("lastTs");
 
-  function setConn(connected){
-    connBadge.textContent = connected ? "在线" : "离线";
-    connBadge.className = "badge " + (connected ? "ok" : "bad");
+  const btnSendTh = $("btnSendTh");
+  const btnAutoFill = $("btnAutoFill");
+  const btnPumpOn = $("btnPumpOn");
+  const btnPumpOff = $("btnPumpOff");
+  const btnPumpToggle = $("btnPumpToggle");
+
+  const mq7ThIn = $("mq7ThIn");
+  const flameThIn = $("flameThIn");
+
+  function setButtonsEnabled(on){
+    [btnSendTh, btnAutoFill, btnPumpOn, btnPumpOff, btnPumpToggle].forEach(b => b.disabled = !on);
   }
-  function randomId(){ return "web_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16); }
-  function fmt2(v){ return (v===null||v===undefined||Number.isNaN(v)) ? "--.--" : Number(v).toFixed(2); }
+
+  function setConn(on){
+    connected = on;
+    connBadge.textContent = on ? "在线" : "离线";
+    connBadge.className = "badge " + (on ? "ok" : "bad");
+    hint.textContent = on ? "在线" : "离线";
+    setButtonsEnabled(on);
+  }
+
+  function randomId(){
+    return "web_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+  }
+
+  function clampV(x){
+    if (x == null || Number.isNaN(x)) return null;
+    return Math.max(0, Math.min(MAX_V, Number(x)));
+  }
+
+  function fmt2(v){
+    return (v===null||v===undefined||Number.isNaN(v)) ? "--.--" : Number(v).toFixed(2);
+  }
 
   function updateUI(){
     $("mq7V").textContent = fmt2(latest.mq7_v);
@@ -165,15 +209,32 @@
     $("flameAlarmTag").style.display = flameAlarm ? "inline-block" : "none";
   }
 
+  function persistInputs(){
+    const obj = { mq7: mq7ThIn.value, flame: flameThIn.value };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  }
+
+  function restoreInputs(){
+    try{
+      const obj = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (obj.mq7 != null) mq7ThIn.value = obj.mq7;
+      if (obj.flame != null) flameThIn.value = obj.flame;
+    }catch(_){}
+  }
+
   function publish(obj){
-    if (!client || !client.connected) { hint.textContent = "未连接，无法发送"; return; }
+    if (!client || !connected) { hint.textContent = "未连接，无法发送"; return; }
     client.publish(MQTT_PUB_TOPIC, JSON.stringify(obj), { qos:0, retain:false });
     hint.textContent = "已发送";
     setTimeout(()=> hint.textContent = "在线", 700);
   }
 
   function connect(){
+    if (client) { try{ client.end(true); }catch(_){} client = null; }
+
     hint.textContent = "自动连接中…";
+    setButtonsEnabled(false);
+
     client = mqtt.connect(BROKER_URL, {
       clientId: randomId(),
       clean: true,
@@ -184,46 +245,81 @@
 
     client.on("connect", () => {
       setConn(true);
-      hint.textContent = "在线";
       client.subscribe(MQTT_SUB_TOPIC, { qos:0 });
     });
 
-    client.on("reconnect", () => hint.textContent = "重连中…");
-    client.on("close", () => { setConn(false); hint.textContent = "离线"; });
-    client.on("offline", () => { setConn(false); hint.textContent = "离线"; });
+    client.on("reconnect", () => { hint.textContent = "重连中…"; });
+    client.on("close", () => { setConn(false); });
+    client.on("offline", () => { setConn(false); });
     client.on("error", () => { setConn(false); hint.textContent = "错误"; });
 
     client.on("message", (topic, message) => {
       if (topic !== MQTT_SUB_TOPIC) return;
       try{
         const data = JSON.parse(message.toString());
-        ["mq7_v","flame_v","mq7_th","flame_th"].forEach(k=>{
-          if (k in data) latest[k] = Number(data[k]);
-        });
+
+        // 只取固定 4 字段
+        if ("mq7_v" in data) latest.mq7_v = clampV(Number(data.mq7_v));
+        if ("flame_v" in data) latest.flame_v = clampV(Number(data.flame_v));
+        if ("mq7_th" in data) latest.mq7_th = clampV(Number(data.mq7_th));
+        if ("flame_th" in data) latest.flame_th = clampV(Number(data.flame_th));
+
         updateUI();
         lastTs.textContent = "last: " + new Date().toLocaleTimeString();
       }catch(_){}
     });
   }
 
-  $("btnAutoFill").onclick = () => {
-    $("mq7ThIn").value = latest.mq7_th==null ? "" : fmt2(latest.mq7_th);
-    $("flameThIn").value = latest.flame_th==null ? "" : fmt2(latest.flame_th);
+  // ===== 输入：离开输入框就存，并且自动夹紧到 0~3.30 =====
+  function normalizeInput(el){
+    const t = el.value.trim();
+    if (!t) return;
+    const v = clampV(Number(t));
+    el.value = (v==null) ? "" : v.toFixed(2);
+    persistInputs();
+  }
+  mq7ThIn.addEventListener("blur", () => normalizeInput(mq7ThIn));
+  flameThIn.addEventListener("blur", () => normalizeInput(flameThIn));
+
+  // ====== 按钮事件 ======
+  btnAutoFill.onclick = () => {
+    mq7ThIn.value = latest.mq7_th==null ? "" : fmt2(latest.mq7_th);
+    flameThIn.value = latest.flame_th==null ? "" : fmt2(latest.flame_th);
+    persistInputs();
   };
 
-  $("btnSendTh").onclick = () => {
-    const mq7 = $("mq7ThIn").value.trim();
-    const fl  = $("flameThIn").value.trim();
+  btnSendTh.onclick = () => {
+    const mq7 = mq7ThIn.value.trim();
+    const fl  = flameThIn.value.trim();
     const cmd = { cmd:"set_th" };
-    if (mq7 !== "") cmd.mq7_th = Number(mq7);
-    if (fl !== "")  cmd.flame_th = Number(fl);
+
+    if (mq7 !== "") cmd.mq7_th = clampV(Number(mq7));
+    if (fl !== "")  cmd.flame_th = clampV(Number(fl));
+
+    // 至少一个有效字段
+    if (!("mq7_th" in cmd) && !("flame_th" in cmd)) { hint.textContent="请输入阈值"; return; }
+
+    // 去掉 null
+    if (cmd.mq7_th == null) delete cmd.mq7_th;
+    if (cmd.flame_th == null) delete cmd.flame_th;
+
     publish(cmd);
   };
 
-  $("btnPumpOn").onclick = () => publish({ cmd:"pump", state:1 });
-  $("btnPumpOff").onclick = () => publish({ cmd:"pump", state:0 });
-  $("btnPumpToggle").onclick = () => publish({ cmd:"pump", toggle:1 });
+  btnPumpOn.onclick = () => publish({ cmd:"pump", state:1 });
+  btnPumpOff.onclick = () => publish({ cmd:"pump", state:0 });
+  btnPumpToggle.onclick = () => publish({ cmd:"pump", toggle:1 });
 
+  // 页面显示/恢复时，确保连接存在（WebView 切后台再回来常见）
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      // 若已断开则触发重连
+      if (!client || !client.connected) connect();
+    }
+  });
+
+  // 启动
+  restoreInputs();
   setConn(false);
   connect();
 </script>
