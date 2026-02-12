@@ -2,188 +2,230 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MQTT Web Demo (test.mosquitto.org)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <title>ESP32S3 控制面板</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 16px; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
-    input, textarea, button { font-size: 14px; padding: 8px; }
-    input, textarea { width: min(560px, 100%); }
-    textarea { height: 90px; }
-    #log { white-space: pre-wrap; background: #111; color: #ddd; padding: 12px; border-radius: 8px; height: 260px; overflow: auto; }
-    .badge { padding: 4px 8px; border-radius: 999px; font-size: 12px; }
-    .ok { background: #e7f7ea; color: #146c2e; }
-    .bad { background: #fde8e8; color: #9b1c1c; }
-    .muted { color: #666; font-size: 12px; }
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e5e7eb;
+      --pri:#2563eb;
+      --pri2:#1d4ed8;
+      --ok:#16a34a;
+      --bad:#e11d48;
+      --warn:#f59e0b;
+      --shadow:0 8px 22px rgba(15, 23, 42, .06);
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text); }
+    .wrap{ padding:14px; max-width:520px; margin:0 auto; }
+    .top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+    .title{ font-size:18px; font-weight:800; letter-spacing:.2px; }
+    .badge{ font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#fff; }
+    .badge.ok{ color:var(--ok); border-color:rgba(22,163,74,.25); background:rgba(22,163,74,.07); }
+    .badge.bad{ color:var(--bad); border-color:rgba(225,29,72,.25); background:rgba(225,29,72,.06); }
+
+    .grid{ display:grid; grid-template-columns:1fr; gap:12px; }
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; box-shadow:var(--shadow); }
+    .cardHead{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+    .name{ font-weight:800; }
+    .sub{ color:var(--muted); font-size:12px; }
+    .big{ font-size:38px; font-weight:900; line-height:1.05; margin:4px 0 2px; letter-spacing:.2px; }
+    .alarm{ border-color:rgba(225,29,72,.35); background:rgba(225,29,72,.04); }
+    .alarmTag{
+      font-size:12px; padding:5px 10px; border-radius:999px;
+      color:#fff; background:var(--bad);
+    }
+
+    .row{ display:flex; gap:10px; }
+    .row > *{ flex:1; }
+    input{
+      width:100%; padding:12px 12px; border-radius:12px; border:1px solid var(--line);
+      background:#fff; color:var(--text); outline:none; font-size:14px;
+    }
+    input::placeholder{ color:#94a3b8; }
+
+    .btns{ display:flex; gap:10px; margin-top:10px; }
+    button{
+      flex:1; padding:12px 10px; border-radius:14px; border:1px solid var(--line);
+      background:#fff; color:var(--text); font-weight:800; font-size:14px;
+      box-shadow:0 6px 16px rgba(15, 23, 42, .05);
+      -webkit-tap-highlight-color: transparent;
+    }
+    button.primary{ background:var(--pri); border-color:rgba(37,99,235,.35); color:#fff; }
+    button.primary:active{ background:var(--pri2); }
+    button.warn{ background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.35); color:#92400e; }
+    button:active{ transform:scale(.99); }
+
+    .footer{ margin-top:10px; color:var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:10px; }
+    .hint{ color:var(--muted); }
   </style>
-  <!-- MQTT.js CDN -->
   <script src="./mqtt.min.js"></script>
 </head>
 <body>
-  <h2>MQTT (WebSocket) Demo</h2>
-  <div class="muted">
-    公共测试 Broker：test.mosquitto.org（无鉴权，Topic 可能被他人订阅/发布；建议用自己的随机前缀）
+  <div class="wrap">
+    <div class="top">
+      <div class="title">ESP32S3 控制面板</div>
+      <div id="connBadge" class="badge bad">离线</div>
+    </div>
+
+    <div class="grid">
+      <div id="mq7Card" class="card">
+        <div class="cardHead">
+          <div>
+            <div class="name">MQ7</div>
+            <div class="sub">电压(V) · 阈值 <span id="mq7ThShow">--</span></div>
+          </div>
+          <div id="mq7AlarmTag" style="display:none" class="alarmTag">超阈值</div>
+        </div>
+        <div id="mq7V" class="big">--.--</div>
+      </div>
+
+      <div id="flameCard" class="card">
+        <div class="cardHead">
+          <div>
+            <div class="name">火焰(AO)</div>
+            <div class="sub">电压(V) · 阈值 <span id="flameThShow">--</span></div>
+          </div>
+          <div id="flameAlarmTag" style="display:none" class="alarmTag">超阈值</div>
+        </div>
+        <div id="flameV" class="big">--.--</div>
+      </div>
+
+      <div class="card">
+        <div class="cardHead">
+          <div class="name">阈值设置</div>
+          <div class="sub">建议 0~3.30V</div>
+        </div>
+        <div class="row">
+          <input id="mq7ThIn" placeholder="mq7_th (V)" inputmode="decimal" />
+          <input id="flameThIn" placeholder="flame_th (V)" inputmode="decimal" />
+        </div>
+        <div class="btns">
+          <button class="primary" id="btnSendTh">发送阈值</button>
+          <button id="btnAutoFill">填入当前</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardHead">
+          <div class="name">水泵控制</div>
+          <div class="sub">GPIO6</div>
+        </div>
+        <div class="btns">
+          <button class="primary" id="btnPumpOn">开泵</button>
+          <button id="btnPumpOff">关泵</button>
+          <button class="warn" id="btnPumpToggle">翻转</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div id="lastTs">last: --:--:--</div>
+      <div id="hint" class="hint">自动连接中…</div>
+    </div>
   </div>
-
-  <div class="row">
-    <label>Broker URL：</label>
-    <input id="broker" value="wss://test.mosquitto.org:8081" />
-  </div>
-
-  <div class="row">
-    <label>Client ID：</label>
-    <input id="clientId" />
-    <span id="status" class="badge bad">未连接</span>
-    <button id="btnConnect">连接</button>
-    <button id="btnDisconnect" disabled>断开</button>
-  </div>
-
-  <hr />
-
-  <div class="row">
-    <label>订阅 Topic：</label>
-    <input id="subTopic" value="parl_demo_001/telemetry" />
-    <button id="btnSub" disabled>订阅</button>
-    <button id="btnUnsub" disabled>取消订阅</button>
-  </div>
-
-  <div class="row">
-    <label>发布 Topic：</label>
-    <input id="pubTopic" value="parl_demo_001/cmd" />
-  </div>
-
-  <div class="row" style="align-items:flex-start;">
-    <label>Payload：</label>
-    <textarea id="payload">{ "cmd": "ping", "ts": 0 }</textarea>
-  </div>
-
-  <div class="row">
-    <label>QoS：</label>
-    <input id="qos" type="number" min="0" max="2" value="0" style="width:80px;" />
-    <label>Retain：</label>
-    <input id="retain" type="checkbox" />
-    <button id="btnPub" disabled>发布</button>
-    <button id="btnClear">清空日志</button>
-  </div>
-
-  <h3>日志</h3>
-  <div id="log"></div>
 
 <script>
+  // ====== 你按需改这里 ======
+  const BROKER_URL = "wss://test.mosquitto.org:8081";
+  const MQTT_SUB_TOPIC = "fangmu/dev/esp32s3_001/up";
+  const MQTT_PUB_TOPIC = "fangmu/dev/esp32s3_001/down";
+  // ===========================
+
   let client = null;
+  let latest = { mq7_v:null, flame_v:null, mq7_th:null, flame_th:null };
 
-  const el = (id) => document.getElementById(id);
-  const logBox = el("log");
-  const status = el("status");
+  const $ = (id) => document.getElementById(id);
+  const connBadge = $("connBadge");
+  const hint = $("hint");
+  const lastTs = $("lastTs");
 
-  function log(...args) {
-    const line = `[${new Date().toLocaleTimeString()}] ${args.join(" ")}`;
-    logBox.textContent += line + "\n";
-    logBox.scrollTop = logBox.scrollHeight;
-    console.log(...args);
+  function setConn(connected){
+    connBadge.textContent = connected ? "在线" : "离线";
+    connBadge.className = "badge " + (connected ? "ok" : "bad");
+  }
+  function randomId(){ return "web_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16); }
+  function fmt2(v){ return (v===null||v===undefined||Number.isNaN(v)) ? "--.--" : Number(v).toFixed(2); }
+
+  function updateUI(){
+    $("mq7V").textContent = fmt2(latest.mq7_v);
+    $("flameV").textContent = fmt2(latest.flame_v);
+    $("mq7ThShow").textContent = fmt2(latest.mq7_th);
+    $("flameThShow").textContent = fmt2(latest.flame_th);
+
+    const mq7Alarm = latest.mq7_v!=null && latest.mq7_th!=null && Number(latest.mq7_v) >= Number(latest.mq7_th);
+    const flameAlarm = latest.flame_v!=null && latest.flame_th!=null && Number(latest.flame_v) >= Number(latest.flame_th);
+
+    $("mq7Card").classList.toggle("alarm", mq7Alarm);
+    $("mq7AlarmTag").style.display = mq7Alarm ? "inline-block" : "none";
+    $("flameCard").classList.toggle("alarm", flameAlarm);
+    $("flameAlarmTag").style.display = flameAlarm ? "inline-block" : "none";
   }
 
-  function setConnectedUI(connected) {
-    status.textContent = connected ? "已连接" : "未连接";
-    status.className = "badge " + (connected ? "ok" : "bad");
-
-    el("btnConnect").disabled = connected;
-    el("btnDisconnect").disabled = !connected;
-    el("btnSub").disabled = !connected;
-    el("btnUnsub").disabled = !connected;
-    el("btnPub").disabled = !connected;
+  function publish(obj){
+    if (!client || !client.connected) { hint.textContent = "未连接，无法发送"; return; }
+    client.publish(MQTT_PUB_TOPIC, JSON.stringify(obj), { qos:0, retain:false });
+    hint.textContent = "已发送";
+    setTimeout(()=> hint.textContent = "在线", 700);
   }
 
-  function randomId() {
-    // 让 clientId 更随机，避免公共 broker 上冲突
-    return "web_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
-  }
-
-  // 初始化 clientId
-  el("clientId").value = randomId();
-
-  el("btnConnect").onclick = () => {
-    const url = el("broker").value.trim();
-    const clientId = el("clientId").value.trim() || randomId();
-    el("clientId").value = clientId;
-
-    log("Connecting to", url, "clientId=", clientId);
-
-    client = mqtt.connect(url, {
-      clientId,
+  function connect(){
+    hint.textContent = "自动连接中…";
+    client = mqtt.connect(BROKER_URL, {
+      clientId: randomId(),
       clean: true,
       keepalive: 30,
-      connectTimeout: 10 * 1000,
-      reconnectPeriod: 2000, // 自动重连
+      connectTimeout: 10_000,
+      reconnectPeriod: 2000,
     });
 
     client.on("connect", () => {
-      log("✅ Connected");
-      setConnectedUI(true);
+      setConn(true);
+      hint.textContent = "在线";
+      client.subscribe(MQTT_SUB_TOPIC, { qos:0 });
     });
 
-    client.on("reconnect", () => log("… Reconnecting"));
-    client.on("close", () => { log("⚠️ Closed"); setConnectedUI(false); });
-    client.on("offline", () => log("⚠️ Offline"));
-    client.on("error", (err) => log("❌ Error:", err?.message || err));
+    client.on("reconnect", () => hint.textContent = "重连中…");
+    client.on("close", () => { setConn(false); hint.textContent = "离线"; });
+    client.on("offline", () => { setConn(false); hint.textContent = "离线"; });
+    client.on("error", () => { setConn(false); hint.textContent = "错误"; });
 
-    client.on("message", (topic, message, packet) => {
-      const text = message?.toString?.() ?? String(message);
-      log("📩", topic, "qos=" + packet.qos, "retain=" + packet.retain, "payload=", text);
+    client.on("message", (topic, message) => {
+      if (topic !== MQTT_SUB_TOPIC) return;
+      try{
+        const data = JSON.parse(message.toString());
+        ["mq7_v","flame_v","mq7_th","flame_th"].forEach(k=>{
+          if (k in data) latest[k] = Number(data[k]);
+        });
+        updateUI();
+        lastTs.textContent = "last: " + new Date().toLocaleTimeString();
+      }catch(_){}
     });
+  }
+
+  $("btnAutoFill").onclick = () => {
+    $("mq7ThIn").value = latest.mq7_th==null ? "" : fmt2(latest.mq7_th);
+    $("flameThIn").value = latest.flame_th==null ? "" : fmt2(latest.flame_th);
   };
 
-  el("btnDisconnect").onclick = () => {
-    if (!client) return;
-    log("Disconnecting...");
-    client.end(true);
-    client = null;
-    setConnectedUI(false);
+  $("btnSendTh").onclick = () => {
+    const mq7 = $("mq7ThIn").value.trim();
+    const fl  = $("flameThIn").value.trim();
+    const cmd = { cmd:"set_th" };
+    if (mq7 !== "") cmd.mq7_th = Number(mq7);
+    if (fl !== "")  cmd.flame_th = Number(fl);
+    publish(cmd);
   };
 
-  el("btnSub").onclick = () => {
-    const topic = el("subTopic").value.trim();
-    if (!client || !topic) return;
-    client.subscribe(topic, { qos: 0 }, (err, granted) => {
-      if (err) log("❌ Subscribe error:", err.message || err);
-      else log("✅ Subscribed:", JSON.stringify(granted));
-    });
-  };
+  $("btnPumpOn").onclick = () => publish({ cmd:"pump", state:1 });
+  $("btnPumpOff").onclick = () => publish({ cmd:"pump", state:0 });
+  $("btnPumpToggle").onclick = () => publish({ cmd:"pump", toggle:1 });
 
-  el("btnUnsub").onclick = () => {
-    const topic = el("subTopic").value.trim();
-    if (!client || !topic) return;
-    client.unsubscribe(topic, (err) => {
-      if (err) log("❌ Unsubscribe error:", err.message || err);
-      else log("✅ Unsubscribed:", topic);
-    });
-  };
-
-  el("btnPub").onclick = () => {
-    const topic = el("pubTopic").value.trim();
-    if (!client || !topic) return;
-
-    let payload = el("payload").value;
-    // 小方便：如果是 JSON，自动补 ts
-    try {
-      const obj = JSON.parse(payload);
-      obj.ts = Date.now();
-      payload = JSON.stringify(obj);
-      el("payload").value = payload;
-    } catch (_) {}
-
-    const qos = Math.max(0, Math.min(2, parseInt(el("qos").value || "0", 10)));
-    const retain = el("retain").checked;
-
-    client.publish(topic, payload, { qos, retain }, (err) => {
-      if (err) log("❌ Publish error:", err.message || err);
-      else log("📤 Published:", topic, "qos=" + qos, "retain=" + retain, "payload=", payload);
-    });
-  };
-
-  el("btnClear").onclick = () => logBox.textContent = "";
-
-  setConnectedUI(false);
+  setConn(false);
+  connect();
 </script>
 </body>
 </html>
