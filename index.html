@@ -17,7 +17,7 @@
       background:var(--bg); color:var(--text);
     }
     .wrap{
-      padding:12px;
+      padding:10px;
       padding-top: calc(12px + var(--appTop) + env(safe-area-inset-top));
       max-width:520px; margin:0 auto;
     }
@@ -30,15 +30,16 @@
     .badge.ok{ color:var(--ok); border-color:rgba(22,163,74,.25); background:rgba(22,163,74,.07); }
     .badge.bad{ color:var(--bad); border-color:rgba(225,29,72,.25); background:rgba(225,29,72,.06); }
 
-    .grid{ display:grid; grid-template-columns:1fr; gap:10px; }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .card{
       background:var(--card); border:1px solid var(--line); border-radius:16px;
-      padding:12px; box-shadow:var(--shadow);
+      padding:10px; box-shadow:var(--shadow);
     }
+    .span2{ grid-column: 1 / -1; }
     .cardHead{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
     .name{ font-weight:900; }
     .sub{ color:var(--muted); font-size:12px; }
-    .big{ font-size:34px; font-weight:950; line-height:1.05; margin:2px 0 0; letter-spacing:.2px; }
+    .big{ font-size:28px; font-weight:950; line-height:1.05; margin:2px 0 0; letter-spacing:.2px; }
     .alarm{ border-color:rgba(225,29,72,.35); background:rgba(225,29,72,.04); }
     .alarmTag{
       font-size:12px; padding:5px 10px; border-radius:999px; color:#fff; background:var(--bad);
@@ -103,7 +104,29 @@
         <div id="flameV" class="big">--.--</div>
       </div>
 
-      <div class="card">
+      <div id="tempCard" class="card">
+        <div class="cardHead">
+          <div>
+            <div class="name">温度</div>
+            <div class="sub">℃ · 阈值 <span id="tempThShow">--</span></div>
+          </div>
+          <div id="tempAlarmTag" style="display:none" class="alarmTag">超阈值</div>
+        </div>
+        <div id="tempV" class="big">--.-</div>
+      </div>
+
+      <div id="humCard" class="card">
+        <div class="cardHead">
+          <div>
+            <div class="name">湿度</div>
+            <div class="sub">%RH · 阈值 <span id="humThShow">--</span></div>
+          </div>
+          <div id="humAlarmTag" style="display:none" class="alarmTag">超阈值</div>
+        </div>
+        <div id="humV" class="big">--.-</div>
+      </div>
+
+      <div class="card span2">
         <div class="cardHead">
           <div class="name">阈值设置</div>
           <div class="sub">建议 0~3.30V</div>
@@ -112,13 +135,39 @@
           <input id="mq7ThIn" placeholder="mq7_th (V)" inputmode="decimal" />
           <input id="flameThIn" placeholder="flame_th (V)" inputmode="decimal" />
         </div>
+        <div class="row" style="margin-top:8px">
+          <input id="tempThIn" placeholder="temp_th (℃)" inputmode="decimal" />
+          <input id="humThIn" placeholder="hum_th (%RH)" inputmode="decimal" />
+        </div>
         <div class="btns">
           <button class="primary" id="btnSendTh">发送阈值</button>
           <button id="btnAutoFill">填入当前</button>
         </div>
       </div>
 
-      <div class="card">
+      <div id="tempCard" class="card">
+        <div class="cardHead">
+          <div>
+            <div class="name">温度</div>
+            <div class="sub">℃ · 阈值 <span id="tempThShow">--</span></div>
+          </div>
+          <div id="tempAlarmTag" style="display:none" class="alarmTag">超阈值</div>
+        </div>
+        <div id="tempV" class="big">--.-</div>
+      </div>
+
+      <div id="humCard" class="card">
+        <div class="cardHead">
+          <div>
+            <div class="name">湿度</div>
+            <div class="sub">%RH · 阈值 <span id="humThShow">--</span></div>
+          </div>
+          <div id="humAlarmTag" style="display:none" class="alarmTag">超阈值</div>
+        </div>
+        <div id="humV" class="big">--.-</div>
+      </div>
+
+      <div class="card span2">
         <div class="cardHead">
           <div class="name">水泵控制</div>
           <div class="sub">GPIO6</div>
@@ -152,7 +201,7 @@
   const STORAGE_KEY = "esp32s3_panel_v1";
 
   let client = null;
-  let latest = { mq7_v:null, flame_v:null, mq7_th:null, flame_th:null };
+  let latest = { mq7_v:null, flame_v:null, temp_v:null, hum_v:null, mq7_th:null, flame_th:null, temp_th:null, hum_th:null };
   let connected = false;
 
   const $ = (id) => document.getElementById(id);
@@ -168,6 +217,8 @@
 
   const mq7ThIn = $("mq7ThIn");
   const flameThIn = $("flameThIn");
+  const tempThIn = $("tempThIn");
+  const humThIn = $("humThIn");
 
   function setButtonsEnabled(on){
     [btnSendTh, btnAutoFill, btnPumpOn, btnPumpOff, btnPumpToggle].forEach(b => b.disabled = !on);
@@ -189,9 +240,20 @@
     if (x == null || Number.isNaN(x)) return null;
     return Math.max(0, Math.min(MAX_V, Number(x)));
   }
+  function clampTemp(x){
+    if (x == null || Number.isNaN(x)) return null;
+    return Math.max(-40, Math.min(80, Number(x)));
+  }
+  function clampHum(x){
+    if (x == null || Number.isNaN(x)) return null;
+    return Math.max(0, Math.min(100, Number(x)));
+  }
 
   function fmt2(v){
     return (v===null||v===undefined||Number.isNaN(v)) ? "--.--" : Number(v).toFixed(2);
+  }
+  function fmt1(v){
+    return (v===null||v===undefined||Number.isNaN(v)) ? "--.-" : Number(v).toFixed(1);
   }
 
 
@@ -222,7 +284,9 @@
       ts: new Date().toISOString(),
       topic: MQTT_SUB_TOPIC,
       mq7_v: latest.mq7_v, mq7_th: latest.mq7_th,
-      flame_v: latest.flame_v, flame_th: latest.flame_th
+      flame_v: latest.flame_v, flame_th: latest.flame_th,
+      temp_v: latest.temp_v, temp_th: latest.temp_th,
+      hum_v: latest.hum_v, hum_th: latest.hum_th
     };
 
     const ok = notifyAndroid(payload);
@@ -235,16 +299,27 @@
   function updateUI(){
     $("mq7V").textContent = fmt2(latest.mq7_v);
     $("flameV").textContent = fmt2(latest.flame_v);
+    $("tempV").textContent = fmt1(latest.temp_v);
+    $("humV").textContent = fmt1(latest.hum_v);
+
     $("mq7ThShow").textContent = fmt2(latest.mq7_th);
     $("flameThShow").textContent = fmt2(latest.flame_th);
+    $("tempThShow").textContent = fmt1(latest.temp_th);
+    $("humThShow").textContent = fmt1(latest.hum_th);
 
     const mq7Alarm = latest.mq7_v!=null && latest.mq7_th!=null && Number(latest.mq7_v) >= Number(latest.mq7_th);
     const flameAlarm = latest.flame_v!=null && latest.flame_th!=null && Number(latest.flame_v) >= Number(latest.flame_th);
+    const tempAlarm = latest.temp_v!=null && latest.temp_th!=null && Number(latest.temp_v) >= Number(latest.temp_th);
+    const humAlarm = latest.hum_v!=null && latest.hum_th!=null && Number(latest.hum_v) >= Number(latest.hum_th);
 
     $("mq7Card").classList.toggle("alarm", mq7Alarm);
     $("mq7AlarmTag").style.display = mq7Alarm ? "inline-block" : "none";
     $("flameCard").classList.toggle("alarm", flameAlarm);
     $("flameAlarmTag").style.display = flameAlarm ? "inline-block" : "none";
+    $("tempCard").classList.toggle("alarm", tempAlarm);
+    $("tempAlarmTag").style.display = tempAlarm ? "inline-block" : "none";
+    $("humCard").classList.toggle("alarm", humAlarm);
+    $("humAlarmTag").style.display = humAlarm ? "inline-block" : "none";
 
     // ===== 超阈值 -> 触发预警（边沿触发：从正常变为告警才推送）=====
     if (mq7Alarm && !alarmState.mq7){ alarmState.mq7 = true; pushAlarm("mq7"); }
@@ -252,6 +327,14 @@
 
     if (flameAlarm && !alarmState.flame){ alarmState.flame = true; pushAlarm("flame"); }
     if (!flameAlarm && alarmState.flame){ alarmState.flame = false; }
+
+    if (tempAlarm && !alarmState.temp){ alarmState.temp = true; pushAlarm("temp"); }
+    if (!tempAlarm && alarmState.temp){ alarmState.temp = false; }
+
+    if (humAlarm && !alarmState.hum){ alarmState.hum = true; pushAlarm("hum"); }
+    if (!humAlarm && alarmState.hum){ alarmState.hum = false; }
+  }
+
   }
 
   function persistInputs(){
@@ -264,6 +347,8 @@
       const obj = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
       if (obj.mq7 != null) mq7ThIn.value = obj.mq7;
       if (obj.flame != null) flameThIn.value = obj.flame;
+      if (obj.temp != null) tempThIn.value = obj.temp;
+      if (obj.hum != null) humThIn.value = obj.hum;
     }catch(_){}
   }
 
@@ -303,11 +388,16 @@
       try{
         const data = JSON.parse(message.toString());
 
-        // 只取固定 4 字段
-        if ("mq7_v" in data) latest.mq7_v = clampV(Number(data.mq7_v));
-        if ("flame_v" in data) latest.flame_v = clampV(Number(data.flame_v));
-        if ("mq7_th" in data) latest.mq7_th = clampV(Number(data.mq7_th));
-        if ("flame_th" in data) latest.flame_th = clampV(Number(data.flame_th));
+        // 只取固定 8 字段（四路实时值 + 四路阈值）
+        if ("mq7_v" in data)   latest.mq7_v = (data.mq7_v===null ? null : clampV(Number(data.mq7_v)));
+        if ("flame_v" in data) latest.flame_v = (data.flame_v===null ? null : clampV(Number(data.flame_v)));
+        if ("temp_v" in data)  latest.temp_v = (data.temp_v===null ? null : clampTemp(Number(data.temp_v)));
+        if ("hum_v" in data)   latest.hum_v = (data.hum_v===null ? null : clampHum(Number(data.hum_v)));
+
+        if ("mq7_th" in data)   latest.mq7_th = (data.mq7_th===null ? null : clampV(Number(data.mq7_th)));
+        if ("flame_th" in data) latest.flame_th = (data.flame_th===null ? null : clampV(Number(data.flame_th)));
+        if ("temp_th" in data)  latest.temp_th = (data.temp_th===null ? null : clampTemp(Number(data.temp_th)));
+        if ("hum_th" in data)   latest.hum_th = (data.hum_th===null ? null : clampHum(Number(data.hum_th)));
 
         updateUI();
         lastTs.textContent = "last: " + new Date().toLocaleTimeString();
@@ -316,37 +406,47 @@
   }
 
   // ===== 输入：离开输入框就存，并且自动夹紧到 0~3.30 =====
-  function normalizeInput(el){
+  function normalizeInput(el, clampFn, digits){
     const t = el.value.trim();
     if (!t) return;
-    const v = clampV(Number(t));
-    el.value = (v==null) ? "" : v.toFixed(2);
+    const v = clampFn(Number(t));
+    el.value = (v==null) ? "" : Number(v).toFixed(digits);
     persistInputs();
   }
-  mq7ThIn.addEventListener("blur", () => normalizeInput(mq7ThIn));
-  flameThIn.addEventListener("blur", () => normalizeInput(flameThIn));
+  mq7ThIn.addEventListener("blur", () => normalizeInput(mq7ThIn, clampV, 2));
+  flameThIn.addEventListener("blur", () => normalizeInput(flameThIn, clampV, 2));
+  tempThIn.addEventListener("blur", () => normalizeInput(tempThIn, clampTemp, 1));
+  humThIn.addEventListener("blur", () => normalizeInput(humThIn, clampHum, 1));
 
   // ====== 按钮事件 ======
   btnAutoFill.onclick = () => {
     mq7ThIn.value = latest.mq7_th==null ? "" : fmt2(latest.mq7_th);
     flameThIn.value = latest.flame_th==null ? "" : fmt2(latest.flame_th);
+    tempThIn.value = latest.temp_th==null ? "" : fmt1(latest.temp_th);
+    humThIn.value = latest.hum_th==null ? "" : fmt1(latest.hum_th);
     persistInputs();
   };
 
   btnSendTh.onclick = () => {
     const mq7 = mq7ThIn.value.trim();
     const fl  = flameThIn.value.trim();
+    const tp  = tempThIn.value.trim();
+    const hm  = humThIn.value.trim();
     const cmd = { cmd:"set_th" };
 
     if (mq7 !== "") cmd.mq7_th = clampV(Number(mq7));
     if (fl !== "")  cmd.flame_th = clampV(Number(fl));
+    if (tp !== "")  cmd.temp_th = clampTemp(Number(tp));
+    if (hm !== "")  cmd.hum_th = clampHum(Number(hm));
 
     // 至少一个有效字段
-    if (!("mq7_th" in cmd) && !("flame_th" in cmd)) { hint.textContent="请输入阈值"; return; }
+    if (!("mq7_th" in cmd) && !("flame_th" in cmd) && !("temp_th" in cmd) && !("hum_th" in cmd)) { hint.textContent="请输入阈值"; return; }
 
     // 去掉 null
     if (cmd.mq7_th == null) delete cmd.mq7_th;
     if (cmd.flame_th == null) delete cmd.flame_th;
+    if (cmd.temp_th == null) delete cmd.temp_th;
+    if (cmd.hum_th == null) delete cmd.hum_th;
 
     publish(cmd);
   };
