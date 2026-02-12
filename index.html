@@ -12,315 +12,224 @@
       --appTop: 74px; /* ⭐ 顶部留白：被你App上方框遮挡的话，把这里调大/调小 */
     }
     *{ box-sizing:border-box; }
-    html,body{ height:100%; }
     body{
-      margin:0; background:var(--bg); color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-      padding-top: var(--appTop);
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg); color:var(--text);
     }
-    .wrap{ max-width:1080px; margin:0 auto; padding:14px 14px 40px; }
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      margin-bottom:12px;
+    .wrap{
+      padding:12px;
+      padding-top: calc(12px + var(--appTop) + env(safe-area-inset-top));
+      max-width:520px; margin:0 auto;
     }
-    .title{
-      display:flex; flex-direction:column; gap:4px;
+    .top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .title{ font-size:16px; font-weight:900; letter-spacing:.2px; }
+    .badge{
+      font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--line);
+      background:#fff; white-space:nowrap;
     }
-    .title h1{ margin:0; font-size:18px; font-weight:800; letter-spacing:.2px; }
-    .title .sub{ color:var(--muted); font-size:12px; }
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      background:var(--card); border:1px solid var(--line); border-radius:999px;
-      padding:8px 10px; box-shadow:var(--shadow);
-      font-size:12px; color:var(--muted);
-    }
-    .dot{ width:8px; height:8px; border-radius:50%; background:var(--bad); }
-    .dot.ok{ background:var(--ok); }
+    .badge.ok{ color:var(--ok); border-color:rgba(22,163,74,.25); background:rgba(22,163,74,.07); }
+    .badge.bad{ color:var(--bad); border-color:rgba(225,29,72,.25); background:rgba(225,29,72,.06); }
 
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:12px;
-    }
-    @media (min-width: 900px){
-      .grid{ grid-template-columns: 1fr 1fr; }
-    }
-
+    .grid{ display:grid; grid-template-columns:1fr; gap:10px; }
     .card{
       background:var(--card); border:1px solid var(--line); border-radius:16px;
-      box-shadow:var(--shadow);
-      padding:14px;
-      position:relative;
-      overflow:hidden;
+      padding:12px; box-shadow:var(--shadow);
     }
-    .card.alarm{
-      border-color: rgba(225,29,72,.35);
-      box-shadow: 0 8px 24px rgba(225,29,72,.12);
-    }
-    .cardHead{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      margin-bottom:10px;
-    }
-    .cardHead .name{
-      font-weight:800; font-size:14px;
-      display:flex; align-items:center; gap:8px;
-    }
-    .tag{
-      display:none;
-      font-size:11px; font-weight:800;
-      padding:3px 8px; border-radius:999px;
-      color:#fff; background:var(--bad);
-    }
-    .tag.warn{ background:var(--warn); color:#111; }
-
-    .kpi{
-      display:flex; align-items:baseline; gap:10px;
-      margin:6px 0 12px;
-    }
-    .kpi .num{ font-size:34px; font-weight:900; letter-spacing:-.5px; }
-    .kpi .unit{ color:var(--muted); font-weight:700; font-size:12px; }
-
-    .row{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      margin-top:10px;
-      padding-top:10px; border-top:1px dashed var(--line);
+    .cardHead{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+    .name{ font-weight:900; }
+    .sub{ color:var(--muted); font-size:12px; }
+    .big{ font-size:34px; font-weight:950; line-height:1.05; margin:2px 0 0; letter-spacing:.2px; }
+    .alarm{ border-color:rgba(225,29,72,.35); background:rgba(225,29,72,.04); }
+    .alarmTag{
+      font-size:12px; padding:5px 10px; border-radius:999px; color:#fff; background:var(--bad);
+      white-space:nowrap;
     }
 
-    .mini{
-      display:flex; flex-direction:column; gap:4px;
-      font-size:12px; color:var(--muted);
+    .row{ display:flex; gap:10px; }
+    .row > *{ flex:1; }
+    input{
+      width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--line);
+      background:#fff; color:var(--text); outline:none; font-size:14px;
     }
-    .mini b{ color:var(--text); font-size:13px; }
+    input::placeholder{ color:#94a3b8; }
+    .btns{ display:flex; gap:10px; margin-top:8px; }
+    button{
+      flex:1; padding:11px 10px; border-radius:14px; border:1px solid var(--line);
+      background:#fff; color:var(--text); font-weight:900; font-size:14px;
+      box-shadow:0 6px 16px rgba(15, 23, 42, .05);
+      -webkit-tap-highlight-color: transparent;
+    }
+    button.primary{ background:var(--pri); border-color:rgba(37,99,235,.35); color:#fff; }
+    button.primary:active{ background:var(--pri2); }
+    button.warn{ background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.35); color:#92400e; }
+    button:active{ transform:scale(.99); }
+    button:disabled{ opacity:.45; box-shadow:none; }
 
-    .ctrl{
-      display:grid; grid-template-columns:1fr 1fr; gap:10px;
-      margin-top:10px;
-    }
-    .btn{
-      border:none;
-      border-radius:12px;
-      padding:10px 12px;
-      font-weight:800;
-      cursor:pointer;
-      background:var(--pri);
-      color:#fff;
-      box-shadow: 0 10px 20px rgba(37,99,235,.18);
-      transition:transform .06s ease, filter .2s ease;
-      user-select:none;
-    }
-    .btn:active{ transform: translateY(1px); }
-    .btn.secondary{
-      background:#0f172a; color:#fff;
-      box-shadow:0 10px 20px rgba(2,6,23,.18);
-    }
-    .btn.ghost{
-      background:#f1f5f9; color:#0f172a; box-shadow:none; border:1px solid var(--line);
-    }
-    .btn.bad{ background:var(--bad); box-shadow:0 10px 20px rgba(225,29,72,.18); }
-    .btn.ok{ background:var(--ok); box-shadow:0 10px 20px rgba(22,163,74,.18); }
-
-    .form{
-      display:grid; grid-template-columns: 1fr 1fr; gap:10px;
-      margin-top:10px;
-    }
-    .field{ display:flex; flex-direction:column; gap:6px; }
-    .field label{ font-size:12px; color:var(--muted); font-weight:700; }
-    .field input{
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 10px;
-      font-size:14px;
-      outline:none;
-      background:#fff;
-    }
-    .field input:focus{ border-color: rgba(37,99,235,.45); box-shadow:0 0 0 4px rgba(37,99,235,.12); }
-    .hint{
-      margin-top:10px;
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.45;
-      min-height: 1.2em;
-    }
     .footer{
-      margin-top:14px;
-      font-size:12px; color:var(--muted);
-      text-align:center;
+      margin-top:8px; color:var(--muted); font-size:12px;
+      display:flex; justify-content:space-between; gap:10px;
     }
-
-    /* 让移动端按钮更好点 */
-    @media (max-width: 420px){
-      .kpi .num{ font-size:30px; }
-      .ctrl{ grid-template-columns:1fr; }
-      .form{ grid-template-columns:1fr; }
-    }
+    .hint{ color:var(--muted); }
   </style>
+  <script src="./mqtt.min.js"></script>
 </head>
 <body>
   <div class="wrap">
-    <div class="topbar">
-      <div class="title">
-        <h1>ESP32S3 控制面板</h1>
-        <div class="sub">实时显示：MQ7 / 火焰电压 &nbsp;|&nbsp; 阈值 &nbsp;|&nbsp; 水泵控制</div>
-      </div>
-      <div class="pill" title="连接状态">
-        <span id="dot" class="dot"></span>
-        <span id="connText">未连接</span>
-        <span id="lastTs" style="margin-left:8px;color:#94a3b8;"></span>
-      </div>
+    <div class="top">
+      <div class="title">ESP32S3 控制面板</div>
+      <div id="connBadge" class="badge bad">离线</div>
     </div>
 
     <div class="grid">
       <div id="mq7Card" class="card">
         <div class="cardHead">
-          <div class="name">
-            MQ7
-            <span id="mq7AlarmTag" class="tag">报警</span>
+          <div>
+            <div class="name">MQ7</div>
+            <div class="sub">电压(V) · 阈值 <span id="mq7ThShow">--</span></div>
           </div>
-          <div class="mini" style="text-align:right">
-            <span>阈值</span>
-            <b><span id="mq7ThShow">--</span> V</b>
-          </div>
+          <div id="mq7AlarmTag" style="display:none" class="alarmTag">超阈值</div>
         </div>
-        <div class="kpi">
-          <div class="num" id="mq7V">--</div>
-          <div class="unit">V</div>
-        </div>
-
-        <div class="row">
-          <div class="mini">
-            <span>提示</span>
-            <b>≥ 阈值触发报警</b>
-          </div>
-          <button id="btnTestAlarmMq7" class="btn ghost" type="button">模拟报警</button>
-        </div>
+        <div id="mq7V" class="big">--.--</div>
       </div>
 
       <div id="flameCard" class="card">
         <div class="cardHead">
-          <div class="name">
-            火焰电压
-            <span id="flameAlarmTag" class="tag warn">报警</span>
+          <div>
+            <div class="name">火焰(AO)</div>
+            <div class="sub">电压(V) · 阈值 <span id="flameThShow">--</span></div>
           </div>
-          <div class="mini" style="text-align:right">
-            <span>阈值</span>
-            <b><span id="flameThShow">--</span> V</b>
-          </div>
+          <div id="flameAlarmTag" style="display:none" class="alarmTag">超阈值</div>
         </div>
-        <div class="kpi">
-          <div class="num" id="flameV">--</div>
-          <div class="unit">V</div>
-        </div>
-
-        <div class="row">
-          <div class="mini">
-            <span>提示</span>
-            <b>≥ 阈值触发报警</b>
-          </div>
-          <button id="btnTestAlarmFlame" class="btn ghost" type="button">模拟报警</button>
-        </div>
+        <div id="flameV" class="big">--.--</div>
       </div>
 
       <div class="card">
         <div class="cardHead">
           <div class="name">阈值设置</div>
-          <span class="tag" style="display:inline-flex;background:#0f172a;">MQTT</span>
+          <div class="sub">建议 0~3.30V</div>
         </div>
-
-        <div class="form">
-          <div class="field">
-            <label>MQ7 阈值 (0~3.30V)</label>
-            <input id="mq7ThIn" inputmode="decimal" placeholder="例如 2.00" />
-          </div>
-          <div class="field">
-            <label>火焰阈值 (0~3.30V)</label>
-            <input id="flameThIn" inputmode="decimal" placeholder="例如 2.00" />
-          </div>
+        <div class="row">
+          <input id="mq7ThIn" placeholder="mq7_th (V)" inputmode="decimal" />
+          <input id="flameThIn" placeholder="flame_th (V)" inputmode="decimal" />
         </div>
-
-        <div class="ctrl">
-          <button id="btnAuto" class="btn" type="button">自动阈值</button>
-          <button id="btnManual" class="btn secondary" type="button">手动设置</button>
+        <div class="btns">
+          <button class="primary" id="btnSendTh">发送阈值</button>
+          <button id="btnAutoFill">填入当前</button>
         </div>
-
-        <div class="hint" id="hint">提示：阈值会夹紧到 0~3.30，离开输入框自动保存。</div>
       </div>
 
       <div class="card">
         <div class="cardHead">
           <div class="name">水泵控制</div>
-          <span class="tag" style="display:inline-flex;background:var(--pri);">PUMP</span>
+          <div class="sub">GPIO6</div>
         </div>
-
-        <div class="ctrl">
-          <button id="btnPumpOn" class="btn ok" type="button">开启</button>
-          <button id="btnPumpOff" class="btn bad" type="button">关闭</button>
-          <button id="btnPumpToggle" class="btn ghost" type="button" style="grid-column:1 / -1">切换（toggle）</button>
+        <div class="btns">
+          <button class="primary" id="btnPumpOn">开泵</button>
+          <button id="btnPumpOff">关泵</button>
+          <button class="warn" id="btnPumpToggle">翻转</button>
         </div>
-
-        <div class="hint">说明：发送 cmd=pump state=1/0 或 toggle=1</div>
       </div>
     </div>
 
-    <div class="footer">WebView 兼容：建议首次打开先点一次 “授权/解锁声音” 以确保蜂鸣可用。</div>
+    <div class="footer">
+      <div id="lastTs">last: --:--:--</div>
+      <div id="hint" class="hint">自动连接中…</div>
+    </div>
   </div>
 
-  <!-- MQTT.js（CDN） -->
-  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script>
+  // ========= 固定协议（你需要的话可以只改 Broker）=========
+  const BROKER_URL = "wss://test.mosquitto.org:8081";
+  const MQTT_SUB_TOPIC = "fangmu/dev/esp32s3_001/up";    // 设备->上位机（订阅）
+  const MQTT_PUB_TOPIC = "fangmu/dev/esp32s3_001/down";  // 上位机->设备（发布）
+  // ==========================================================
 
-  <script>
-  // =================== 配置（按你 ESP32/服务器改） ===================
-  const MQTT_URL = "wss://broker.emqx.io:8084/mqtt"; // 示例：公共 broker（你可替换）
-  const MQTT_SUB_TOPIC = "esp32s3/sub";              // 设备上报
-  const MQTT_PUB_TOPIC = "esp32s3/pub";              // 控制下发
-  // ==================================================================
+  // 顶部留白可在这里改（也可只改 CSS 里的 --appTop）
+  const APP_TOP_PX = 34;
+  document.documentElement.style.setProperty("--appTop", APP_TOP_PX + "px");
+
+  const MAX_V = 3.30;
+  const STORAGE_KEY = "esp32s3_panel_v1";
+
+  let client = null;
+  let latest = { mq7_v:null, flame_v:null, mq7_th:null, flame_th:null };
+  let connected = false;
 
   const $ = (id) => document.getElementById(id);
-
-  const dot = $("dot");
-  const connText = $("connText");
-  const lastTs = $("lastTs");
+  const connBadge = $("connBadge");
   const hint = $("hint");
+  const lastTs = $("lastTs");
 
-  const mq7ThIn = $("mq7ThIn");
-  const flameThIn = $("flameThIn");
-
-  const btnAuto = $("btnAuto");
-  const btnManual = $("btnManual");
+  const btnSendTh = $("btnSendTh");
+  const btnAutoFill = $("btnAutoFill");
   const btnPumpOn = $("btnPumpOn");
   const btnPumpOff = $("btnPumpOff");
   const btnPumpToggle = $("btnPumpToggle");
 
-  const latest = { mq7_v:null, flame_v:null, mq7_th:null, flame_th:null };
+  const mq7ThIn = $("mq7ThIn");
+  const flameThIn = $("flameThIn");
 
-  let client = null;
-
-  function randomId(){
-    return "web_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+  function setButtonsEnabled(on){
+    [btnSendTh, btnAutoFill, btnPumpOn, btnPumpOff, btnPumpToggle].forEach(b => b.disabled = !on);
   }
 
-  function clampV(v){
-    if (Number.isNaN(v) || v==null) return null;
-    return Math.max(0, Math.min(3.30, v));
+  function setConn(on){
+    connected = on;
+    connBadge.textContent = on ? "在线" : "离线";
+    connBadge.className = "badge " + (on ? "ok" : "bad");
+    hint.textContent = on ? "在线" : "离线";
+    setButtonsEnabled(on);
+  }
+
+  function randomId(){
+    return "web_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+  }
+
+  function clampV(x){
+    if (x == null || Number.isNaN(x)) return null;
+    return Math.max(0, Math.min(MAX_V, Number(x)));
   }
 
   function fmt2(v){
-    if (v==null || Number.isNaN(Number(v))) return "--";
-    return Number(v).toFixed(2);
+    return (v===null||v===undefined||Number.isNaN(v)) ? "--.--" : Number(v).toFixed(2);
   }
 
-  function setConn(ok){
-    dot.classList.toggle("ok", !!ok);
-    connText.textContent = ok ? "已连接" : "未连接";
+
+  // ===== 预警：通知 Android App（不改 UI，只加逻辑）=====
+  // 需要 App 端：webView.addJavascriptInterface(..., "Android") 并实现 onAlarm(String json)
+  const ALARM_COOLDOWN_MS = 30_000; // 同类告警最短间隔（防刷屏）
+  let alarmState = { mq7:false, flame:false };
+  let lastAlarmAt = { mq7:0, flame:0 };
+
+  function notifyAndroid(payload){
+    try{
+      if (window.Android && typeof window.Android.onAlarm === "function"){
+        window.Android.onAlarm(JSON.stringify(payload));
+        return true;
+      }
+    }catch(_){}
+    return false;
   }
 
-  function persistInputs(){
-    localStorage.setItem("mq7_th_in", mq7ThIn.value.trim());
-    localStorage.setItem("flame_th_in", flameThIn.value.trim());
-  }
+  function pushAlarm(which){
+    const now = Date.now();
+    if (now - lastAlarmAt[which] < ALARM_COOLDOWN_MS) return;
+    lastAlarmAt[which] = now;
 
-  function restoreInputs(){
-    mq7ThIn.value = localStorage.getItem("mq7_th_in") || "";
-    flameThIn.value = localStorage.getItem("flame_th_in") || "";
+    const payload = {
+      type: "alarm",
+      which, // "mq7" | "flame"
+      ts: new Date().toISOString(),
+      topic: MQTT_SUB_TOPIC,
+      mq7_v: latest.mq7_v, mq7_th: latest.mq7_th,
+      flame_v: latest.flame_v, flame_th: latest.flame_th
+    };
+
+    const ok = notifyAndroid(payload);
+
+    // 复用现有 hint，不新增 UI
+    hint.textContent = ok ? "已通知App" : "未接入App桥";
+    setTimeout(()=> hint.textContent = connected ? "在线" : "离线", 800);
   }
 
   function updateUI(){
@@ -334,45 +243,44 @@
 
     $("mq7Card").classList.toggle("alarm", mq7Alarm);
     $("mq7AlarmTag").style.display = mq7Alarm ? "inline-block" : "none";
-
     $("flameCard").classList.toggle("alarm", flameAlarm);
     $("flameAlarmTag").style.display = flameAlarm ? "inline-block" : "none";
 
-    // 报警提醒（弹窗/蜂鸣/震动/通知）
-    if (window.updateSensorValuesForAlarm) {
-      window.updateSensorValuesForAlarm(latest.mq7_v, latest.flame_v, latest.mq7_th, latest.flame_th);
-    }
+    // ===== 超阈值 -> 触发预警（边沿触发：从正常变为告警才推送）=====
+    if (mq7Alarm && !alarmState.mq7){ alarmState.mq7 = true; pushAlarm("mq7"); }
+    if (!mq7Alarm && alarmState.mq7){ alarmState.mq7 = false; }
+
+    if (flameAlarm && !alarmState.flame){ alarmState.flame = true; pushAlarm("flame"); }
+    if (!flameAlarm && alarmState.flame){ alarmState.flame = false; }
+  }
+
+  function persistInputs(){
+    const obj = { mq7: mq7ThIn.value, flame: flameThIn.value };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  }
+
+  function restoreInputs(){
+    try{
+      const obj = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (obj.mq7 != null) mq7ThIn.value = obj.mq7;
+      if (obj.flame != null) flameThIn.value = obj.flame;
+    }catch(_){}
   }
 
   function publish(obj){
-    if (!client || !client.connected){
-      hint.textContent = "未连接，无法发送";
-      return;
-    }
-    try{
-      client.publish(MQTT_PUB_TOPIC, JSON.stringify(obj), { qos:0, retain:false });
-      hint.textContent = "已发送: " + JSON.stringify(obj);
-    }catch(e){
-      hint.textContent = "发送失败";
-    }
+    if (!client || !connected) { hint.textContent = "未连接，无法发送"; return; }
+    client.publish(MQTT_PUB_TOPIC, JSON.stringify(obj), { qos:0, retain:false });
+    hint.textContent = "已发送";
+    setTimeout(()=> hint.textContent = "在线", 700);
   }
 
-  // ====== 模拟报警（便于你测试 UI）======
-  $("btnTestAlarmMq7").onclick = () => {
-    latest.mq7_v = 2.50; latest.mq7_th = 2.00;
-    updateUI();
-  };
-  $("btnTestAlarmFlame").onclick = () => {
-    latest.flame_v = 2.60; latest.flame_th = 2.00;
-    updateUI();
-  };
-
-  // ====== MQTT 连接 & 收消息 ======
   function connect(){
-    if (client) { try{ client.end(true);}catch(_){} }
-    hint.textContent = "连接中…";
+    if (client) { try{ client.end(true); }catch(_){} client = null; }
 
-    client = mqtt.connect(MQTT_URL, {
+    hint.textContent = "自动连接中…";
+    setButtonsEnabled(false);
+
+    client = mqtt.connect(BROKER_URL, {
       clientId: randomId(),
       clean: true,
       keepalive: 30,
@@ -383,7 +291,6 @@
     client.on("connect", () => {
       setConn(true);
       client.subscribe(MQTT_SUB_TOPIC, { qos:0 });
-      hint.textContent = "已连接";
     });
 
     client.on("reconnect", () => { hint.textContent = "重连中…"; });
@@ -420,13 +327,17 @@
   flameThIn.addEventListener("blur", () => normalizeInput(flameThIn));
 
   // ====== 按钮事件 ======
-  btnAuto.onclick = () => publish({ cmd:"auto_threshold" });
+  btnAutoFill.onclick = () => {
+    mq7ThIn.value = latest.mq7_th==null ? "" : fmt2(latest.mq7_th);
+    flameThIn.value = latest.flame_th==null ? "" : fmt2(latest.flame_th);
+    persistInputs();
+  };
 
-  btnManual.onclick = () => {
+  btnSendTh.onclick = () => {
     const mq7 = mq7ThIn.value.trim();
-    const fl = flameThIn.value.trim();
+    const fl  = flameThIn.value.trim();
+    const cmd = { cmd:"set_th" };
 
-    const cmd = { cmd:"manual_threshold" };
     if (mq7 !== "") cmd.mq7_th = clampV(Number(mq7));
     if (fl !== "")  cmd.flame_th = clampV(Number(fl));
 
@@ -452,270 +363,10 @@
     }
   });
 
-  // ===================== 报警提醒（弹窗/蜂鸣/震动/通知） =====================
-  // 说明：
-  // - 触发条件：mq7_v >= mq7_th 或 flame_v >= flame_th（阈值来自设备上报 latest.*_th；若无则用输入框值）
-  // - 边沿触发：从未超阈值 -> 超阈值 才会触发一次，避免疯狂重复报警
-  // - 可“稍后 5 分钟”暂停报警；可勾选“保持直到确认”防止恢复后自动停止
-  (function initAlarm(){
-    const SNOOZE_MS = 5 * 60 * 1000;
-
-    let alarmActive = false;
-    let snoozeUntil = 0;
-    let audioCtx = null;
-    let beepTimer = null;
-    let lastOver = { mq7:false, flame:false };
-
-    const $ = (id) => document.getElementById(id);
-    const overlay = $("alarmOverlay");
-    const msgBox  = $("alarmMessage");
-    const hint    = $("alarmHint");
-
-    if (!overlay) return; // 没插入 overlay 就不初始化
-
-    const enableChk  = $("alarmEnableChk");
-    const soundChk   = $("alarmSoundChk");
-    const vibrateChk = $("alarmVibrateChk");
-    const notifyChk  = $("alarmNotifyChk");
-    const holdChk    = $("alarmHoldChk");
-
-    function ensureAudioContext(){
-      if (!audioCtx){
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) return null;
-        audioCtx = new Ctx();
-      }
-      return audioCtx;
-    }
-
-    async function unlockAudio(){
-      const ctx = ensureAudioContext();
-      if (!ctx){ hint.textContent="当前环境不支持 WebAudio，无法蜂鸣。"; return; }
-      try{
-        if (ctx.state === "suspended") await ctx.resume();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.value = 880;
-        gain.gain.value = 0.0001; // 极小音量，仅用于解锁
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.start(); osc.stop(ctx.currentTime + 0.02);
-        hint.textContent = "声音已解锁 ✅（之后报警可蜂鸣）";
-      }catch(e){
-        hint.textContent = "解锁声音失败（WebView 可能限制自动播放）。请再点一次。";
-      }
-    }
-
-    function startBeepLoop(){
-      if (!soundChk.checked) return;
-      const ctx = ensureAudioContext();
-      if (!ctx) return;
-      if (beepTimer) return;
-
-      beepTimer = setInterval(() => {
-        try{
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = "square";
-          osc.frequency.value = 880;
-          gain.gain.value = 0.12;
-          osc.connect(gain); gain.connect(ctx.destination);
-          osc.start(); osc.stop(ctx.currentTime + 0.2);
-        }catch(_){}
-      }, 900);
-    }
-
-    function stopBeepLoop(){
-      if (beepTimer) clearInterval(beepTimer);
-      beepTimer = null;
-    }
-
-    function vibratePattern(){
-      if (!vibrateChk.checked) return;
-      if (navigator.vibrate) navigator.vibrate([250,120,250,120,400]);
-    }
-
-    async function tryNotify(title, body){
-      if (!notifyChk.checked) return;
-      if (!("Notification" in window)) return;
-      try{
-        if (Notification.permission === "default"){
-          await Notification.requestPermission();
-        }
-        if (Notification.permission === "granted"){
-          new Notification(title, { body });
-        }
-      }catch(_){}
-    }
-
-    function showAlarm(message){
-      overlay.style.display = "flex";
-      msgBox.textContent = message;
-    }
-
-    function hideAlarm(){
-      overlay.style.display = "none";
-    }
-
-    function triggerAlarm(reasonText){
-      const now = Date.now();
-      if (!enableChk.checked) return;
-      if (now < snoozeUntil) return;
-      if (alarmActive) return;
-
-      alarmActive = true;
-      showAlarm(reasonText);
-      startBeepLoop();
-      vibratePattern();
-      tryNotify("报警提醒", reasonText);
-    }
-
-    function stopAlarm({ keepOverlay=false } = {}){
-      alarmActive = false;
-      stopBeepLoop();
-      if (!keepOverlay) hideAlarm();
-    }
-
-    $("alarmUnlockAudioBtn").addEventListener("click", unlockAudio);
-    $("alarmAckBtn").addEventListener("click", () => stopAlarm({ keepOverlay:false }));
-    $("alarmStopBtn").addEventListener("click", () => stopAlarm({ keepOverlay:false }));
-    $("alarmCloseBtn").addEventListener("click", hideAlarm);
-
-    $("alarmSnoozeBtn").addEventListener("click", () => {
-      snoozeUntil = Date.now() + SNOOOZE_MS;
-      hint.textContent = "已稍后 5 分钟。";
-      stopAlarm({ keepOverlay:false });
-    });
-
-    $("alarmTestBtn").addEventListener("click", () => {
-      triggerAlarm("这是一次测试报警（检查声音/震动/弹窗/通知）");
-    });
-
-    soundChk.addEventListener("change", () => {
-      if (!soundChk.checked) stopBeepLoop();
-      else if (alarmActive) startBeepLoop();
-    });
-
-    // 对外暴露：喂传感器值 + 阈值（阈值可选）
-    window.updateSensorValuesForAlarm = function(mq7_v, flame_v, mq7_th, flame_th){
-      const mq7  = Number(mq7_v);
-      const fl   = Number(flame_v);
-      const thMq7 = (mq7_th!=null && mq7_th!=="" && !Number.isNaN(Number(mq7_th))) ? Number(mq7_th) : null;
-      const thFl  = (flame_th!=null && flame_th!=="" && !Number.isNaN(Number(flame_th))) ? Number(flame_th) : null;
-
-      // 若阈值没传，就从输入框取
-      const mq7ThFallback = (typeof mq7ThIn !== "undefined") ? Number(mq7ThIn.value) : null;
-      const flThFallback  = (typeof flameThIn !== "undefined") ? Number(flameThIn.value) : null;
-
-      const mq7Th = (thMq7!=null && !Number.isNaN(thMq7)) ? thMq7 : (Number.isFinite(mq7ThFallback) ? mq7ThFallback : null);
-      const flTh  = (thFl!=null && !Number.isNaN(thFl)) ? thFl : (Number.isFinite(flThFallback) ? flThFallback : null);
-
-      const overMq7 = (mq7Th!=null && Number.isFinite(mq7)) ? (mq7 >= mq7Th) : false;
-      const overFl  = (flTh!=null && Number.isFinite(fl))  ? (fl  >= flTh)  : false;
-
-      if (overMq7 && !lastOver.mq7){
-        triggerAlarm(`MQ7 超阈值：${mq7.toFixed(2)} ≥ ${mq7Th.toFixed(2)}`);
-      }
-      if (overFl && !lastOver.flame){
-        triggerAlarm(`火焰电压超阈值：${fl.toFixed(2)} ≥ ${flTh.toFixed(2)}`);
-      }
-
-      if (!holdChk.checked && alarmActive && !overMq7 && !overFl){
-        stopAlarm({ keepOverlay:false });
-      }
-
-      lastOver.mq7 = overMq7;
-      lastOver.flame = overFl;
-    };
-  })();
-  // ===================== /报警提醒 =====================
-
   // 启动
   restoreInputs();
   setConn(false);
   connect();
 </script>
-
-  <!-- ============ 报警提醒 Overlay ============ -->
-<div id="alarmOverlay" style="
-  position:fixed;inset:0;display:none;z-index:99999;
-  background:rgba(0,0,0,.65);backdrop-filter:blur(2px);
-  align-items:center;justify-content:center;padding:16px;
-">
-  <div style="
-    width:min(520px, 92vw); background:#fff; border-radius:14px;
-    padding:16px 16px 12px; box-shadow:0 12px 40px rgba(0,0,0,.35);
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-  ">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-      <div style="font-size:18px;font-weight:700;color:#b00020;">🚨 报警提醒</div>
-      <button id="alarmCloseBtn" style="
-        border:none;background:#f2f2f2;border-radius:10px;padding:6px 10px;
-        cursor:pointer;font-size:14px;
-      ">关闭</button>
-    </div>
-
-    <div id="alarmMessage" style="margin-top:10px;line-height:1.5;color:#111;font-size:15px;"></div>
-
-    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
-      <button id="alarmAckBtn" style="
-        border:none;background:#b00020;color:#fff;border-radius:12px;
-        padding:10px 12px;cursor:pointer;font-weight:700;
-      ">确认并停止</button>
-
-      <button id="alarmSnoozeBtn" style="
-        border:none;background:#ffb300;color:#111;border-radius:12px;
-        padding:10px 12px;cursor:pointer;font-weight:700;
-      ">稍后 5 分钟</button>
-
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;">
-        <input id="alarmHoldChk" type="checkbox" />
-        保持直到确认（不自动停）
-      </label>
-    </div>
-
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #eee;
-      display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
-      <button id="alarmUnlockAudioBtn" style="
-        border:none;background:#1976d2;color:#fff;border-radius:12px;
-        padding:10px 12px;cursor:pointer;font-weight:700;
-      ">点我授权/解锁声音</button>
-
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;">
-        <input id="alarmEnableChk" type="checkbox" checked />
-        启用报警
-      </label>
-
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;">
-        <input id="alarmSoundChk" type="checkbox" checked />
-        声音
-      </label>
-
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;">
-        <input id="alarmVibrateChk" type="checkbox" checked />
-        震动
-      </label>
-
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;">
-        <input id="alarmNotifyChk" type="checkbox" />
-        通知
-      </label>
-
-      <button id="alarmTestBtn" style="
-        border:none;background:#2e7d32;color:#fff;border-radius:12px;
-        padding:10px 12px;cursor:pointer;font-weight:700;
-      ">测试报警</button>
-
-      <button id="alarmStopBtn" style="
-        border:none;background:#616161;color:#fff;border-radius:12px;
-        padding:10px 12px;cursor:pointer;font-weight:700;
-      ">停止</button>
-    </div>
-
-    <div id="alarmHint" style="margin-top:10px;font-size:12px;color:#666;"></div>
-  </div>
-</div>
-<!-- ============ /报警提醒 Overlay ============ -->
-
 </body>
 </html>
